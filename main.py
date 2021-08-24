@@ -50,6 +50,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
 
+    # list of posts objects linked to each user
+    # "author" is the author property in BlogPost class
+    posts = relationship("BlogPost", back_populates="author")
+
 
 # Create all the tables in the database
 # db.create_all()
@@ -58,7 +62,12 @@ class User(UserMixin, db.Model):
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
-    author = db.Column(db.String(250), nullable=False)
+
+    # foreign key. "users.id" refers to the tablename of User.
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    # reference to the User object. "posts" refers to the posts property in the User class.
+    author = relationship("User", back_populates="posts")
+
     title = db.Column(db.String(250), unique=True, nullable=False)
     subtitle = db.Column(db.String(250), nullable=False)
     date = db.Column(db.String(250), nullable=False)
@@ -66,7 +75,7 @@ class BlogPost(db.Model):
     img_url = db.Column(db.String(250), nullable=False)
 
 
-# db.create_all()
+db.create_all()
 
 
 @app.route("/")
@@ -143,7 +152,7 @@ def add_new_post():
             subtitle=form.subtitle.data,
             body=form.body.data,
             img_url=form.img_url.data,
-            author=current_user,
+            author_id=current_user.id,
             date=date.today().strftime("%B %d, %Y"),
         )
         db.session.add(new_post)
@@ -157,14 +166,11 @@ def add_new_post():
 @admin_only
 def edit_post(post_id):
     post = BlogPost.query.get(post_id)
-    edit_form = CreatePostForm(
-        title=post.title, subtitle=post.subtitle, img_url=post.img_url, author=post.author, body=post.body
-    )
+    edit_form = CreatePostForm(title=post.title, subtitle=post.subtitle, img_url=post.img_url, body=post.body)
     if edit_form.validate_on_submit():
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
         post.img_url = edit_form.img_url.data
-        post.author = edit_form.author.data
         post.body = edit_form.body.data
         db.session.commit()
         return redirect(url_for("show_post", post_id=post.id))
