@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from flask import Flask, render_template, redirect, url_for, flash, abort
 from flask_bootstrap import Bootstrap
@@ -11,7 +12,7 @@ from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from flask_gravatar import Gravatar
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "anodyne-grimace-rang-slung"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 ckeditor = CKEditor(app)
 gravatar = Gravatar(
     app, size=100, rating="g", default="retro", force_default=False, force_lower=False, use_ssl=False, base_url=None
@@ -40,7 +41,8 @@ def admin_only(f):
 
 
 ##CONNECT TO DB
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///blog.db"
+# Uses the DATABASE_URL if present, otherwise uses local database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
