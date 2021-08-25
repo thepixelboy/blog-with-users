@@ -42,7 +42,8 @@ def admin_only(f):
 
 ##CONNECT TO DB
 # Uses the DATABASE_URL if present, otherwise uses local database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
+uri = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = uri.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
